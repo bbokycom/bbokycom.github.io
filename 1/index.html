@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CS180 Project #1: Images of the Russian Empire:</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <header>
+        <h1>Programming Project #1 (proj1)</h1>
+        <h2>CS180: Intro to Computer Vision and Computational Photography</h2>
+        <h3>Images of the Russian Empire</h3>
+        <p>Due Date: Friday, September 12, 2025 at 11:59 PM</p>
+    </header>
+
+    <section id="overview">
+        <h2>Project Overview & Approach</h2>
+        <p>
+            This project involved taking three grayscale images (representing the blue, green, and red channels) of images from the Prokudin-Gorskii collection and aligning them to create a fully colored image. 
+            
+            <h3>Naive Single-scale alignment</h3>
+            <p>
+            The initial approach I used was a naive, straightforward way of aligning the image channels. In this method, I would match two channels at a time (green to blue, then red to blue). This approach would exhaustively search over a range of possible x and y shifts from the first image to the second image (over a 15 pixel range in both directions). For each shift, I calculated a similarity metric, specifically the Sum of Squared Differences or the L2 norm between the overlapping regions of the two images.
+            </p>
+            <p>
+            The L2 norm is essentially taking the difference between each pixel within the overlapping region of the two images, squaring that difference, and then summing all of those squared differences together. The lower the L2 norm, the less differences there are between the two images, and thus they are better aligned. This is expressed mathematically as:
+            </p>
+            <p style="text-align:center;"></p>
+                <img src="./images/l2.png" alt="L2 Norm Equation" style="max-width: 320px; width: 100%; margin: 1em auto; display: block;">
+            </p>
+            <p>
+            The shift that resulted in the lowest error was chosen as the optimal alignment for that channel. Repeating for the green and red channels, I would then combine the three aligned channels into a single color image.
+            </p>
+            This naive approach worked reasonably well for smaller images, but for larger images it was either unable to find a good alignment or would take unreasonably long to run. To improve performance, I implemented an image pyramid approach. 
+            
+            <h3>Multi-scale pyramid alignment</h3>
+            The multi-scale pyramid alignment method improves both the speed and accuracy of channel alignment, especially for large images. Instead of having to exhaustively search over a large range of pixels to align these large images, this approach recursively aligns images at progressively smaller scales. It then uses these lower-resolution alignments to inform and refine the alignment at higher resolutions, which allows for efficient global search of the best alignment.
+            
+            The steps of the pyramid alignment approach are:
+            <ul>
+                <li>First, I created a function to downsample an image by a factor of 2.</li>
+                <li>Next, I would recurse using the downscaled images, which should return the optimal shift alignment of the two downscaled images.</li>
+                <li>Using this downscaled shift, I then multiply it by 2 again to bring it up to the current scale.</li>
+                <li>Finally, I do a small local search around this updated shift.</li>
+                <ul>
+                    <li>This local search uses the naive algorithm from earlier, using the L2 error to align the channels doing an exhaustive search over a local neighborhood. In this case, we can use a smaller area than 15x15 as we are more likely to be in a better place than if we had just started with the large images.</li>
+                </ul>
+                <li>The function then returns the optimal shift that aligns the frames.</li>
+                <li>If an image was smaller than 128 pixels, the pyramid algorithm just ran the naive exhaustive search algorithm.</li>
+            </ul>
+            This approach was okay, but for some images such as the "emir" image, it was still very misaligned. To improve this, I added added an automatic border croping step to remove any borders that affected alignment. Additionally, for the "emir" image, aligning to the blue channel did not work well, so I aligned to the green channel which worked better.
+        </p>
+    </section>
+
+    <section id="results">
+        <h2>Results on Example Images</h2>
+        <p>
+            Here are the results on three images that were smaller in size, and thus the naive alignment algorithm was sufficient.
+        </p>
+        <!-- Example result images and offsets -->
+        <div class="results" style="display: flex; flex-wrap: wrap; gap: 2%;">
+            <figure style="flex: 1 1 30%; min-width: 250px; max-width: 32%; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/naive_cathedral.jpg" alt="Naive Cathedral Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>cathedral.jpg</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-5, -2)<br>
+            <span style="color: #a22;">Red shift:</span> (7, 1)
+            </figcaption>
+            </figure>
+            <figure style="flex: 1 1 30%; min-width: 250px; max-width: 32%; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/naive_monastery.jpg" alt="Naive Monastery Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>monastery.jpg</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (3, -2)<br>
+            <span style="color: #a22;">Red shift:</span> (6, 1)
+            </figcaption>
+            </figure>
+            <figure style="flex: 1 1 30%; min-width: 250px; max-width: 32%; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/naive_tobolsk.jpg" alt="Naive Tobolsk Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>tobolsk.jpg</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-3, -3)<br>
+            <span style="color: #a22;">Red shift:</span> (4, 1)
+            </figcaption>
+            </figure>
+        </div>
+        <p>
+            Here are the results on the remaining images that were too large for the naive algorithm, and thus the pyramid approach was used.
+        </p>
+        <div class="results" style="display: flex; flex-wrap: wrap; gap: 2%;">
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_church.jpg" alt="Church Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>church.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-25, -4)<br>
+            <span style="color: #a22;">Red shift:</span> (33, -8)
+            </figcaption>
+            </figure>
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_emir.jpg" alt="Emir Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>emir.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-49, -24)<br>
+            <span style="color: #a22;">Red shift:</span> (57, 17)
+            </figcaption>
+            </figure>
+        </div>
+        <div class="results" style="display: flex; flex-wrap: wrap; gap: 2%;">
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_harvesters.jpg" alt="Harvesters Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>harvesters.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-59, -16)<br>
+            <span style="color: #a22;">Red shift:</span> (65, -3)
+            </figcaption>
+            </figure>
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_icon.jpg" alt="Icon Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>icon.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-41, -17)<br>
+            <span style="color: #a22;">Red shift:</span> (48, 5)
+            </figcaption>
+            </figure>
+        </div>
+        <div class="results" style="display: flex; flex-wrap: wrap; gap: 2%;">
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_italil.jpg" alt="Italil Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>italil.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-38, -21)<br>
+            <span style="color: #a22;">Red shift:</span> (38, 15)
+            </figcaption>
+            </figure>
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_lastochikino.jpg" alt="Lastochikino Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>lastochikino.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (2, 2)<br>
+            <span style="color: #a22;">Red shift:</span> (78, -7)
+            </figcaption>
+            </figure>
+        </div>
+        <div class="results" style="display: flex; flex-wrap: wrap; gap: 2%;">
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_lugano.jpg" alt="Lugano Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>lugano.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-41, 16)<br>
+            <span style="color: #a22;">Red shift:</span> (52, -13)
+            </figcaption>
+            </figure>
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_melons.jpg" alt="Melons Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>melons.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-81, -10)<br>
+            <span style="color: #a22;">Red shift:</span> (96, 3)
+            </figcaption>
+            </figure>
+        </div>
+        <div class="results" style="display: flex; flex-wrap: wrap; gap: 2%;">
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_self_portrait.jpg" alt="Self Portrait Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>self_portrait.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-78, -29)<br>
+            <span style="color: #a22;">Red shift:</span> (98, 8)
+            </figcaption>
+            </figure>
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_siren.jpg" alt="Siren Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>siren.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-49, 6)<br>
+            <span style="color: #a22;">Red shift:</span> (47, -18)
+            </figcaption>
+            </figure>
+        </div>
+        <div class="results" style="display: flex; flex-wrap: wrap; gap: 2%;">
+            <figure style="flex: 1 1 48%; min-width: 300px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; padding: 1em; text-align: center;">
+            <img src="./images/pyramid_three_generations.jpg" alt="Three Generations Result" style="width:100%; border-radius: 4px;">
+            <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+            <strong>three_generations.tif</strong><br>
+            <span style="color: #27a;">Blue shift:</span> (-53, -14)<br>
+            <span style="color: #a22;">Red shift:</span> (58, -3)
+            </figcaption>
+            </figure>
+        </div>
+    </section>
+</body>
+</html>
