@@ -49,6 +49,26 @@
             </ul>
             This approach was okay, but for some images such as the "emir" image, it was still very misaligned. To improve this, I added added an automatic border croping step to remove any borders that affected alignment. Additionally, for the "emir" image, aligning to the blue channel did not work well, so I aligned to the green channel which worked better.
         </p>
+        <h3>Comparison: "emir" Image Before and After Cropping</h3>
+        <p>
+            Below is a side-by-side comparison of the "emir" image before and after applying automatic border cropping. The left image (<strong>pyramid_emir_uncropped.jpg</strong>) shows the result after pyramid alignment but <em>before</em> cropping, where some misalignment and color fringing remain due to the borders. The right image (<strong>pyramid_emir.jpg</strong>) shows the result <em>after</em> cropping, with borders removed and improved channel alignment.
+        </p>
+        <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 2em; justify-content: center; align-items: flex-start; margin-bottom: 2em;">
+            <figure style="flex: 1 1 320px; max-width: 400px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 1em; text-align: center; margin: 0;">
+                <img src="./images/pyramid_emir_uncropped.jpg" alt="Emir Before Cropping" style="width:100%; border-radius: 4px;">
+                <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+                    <strong>pyramid_emir_uncropped.jpg</strong><br>
+                    <span style="color: #a22;">Before cropping</span>
+                </figcaption>
+            </figure>
+            <figure style="flex: 1 1 320px; max-width: 400px; background: #f8f8f8; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 1em; text-align: center; margin: 0;">
+                <img src="./images/pyramid_emir.jpg" alt="Emir After Cropping" style="width:100%; border-radius: 4px;">
+                <figcaption style="margin-top: 0.8em; font-size: 1em; color: #333;">
+                    <strong>pyramid_emir.jpg</strong><br>
+                    <span style="color: #27a;">After cropping</span>
+                </figcaption>
+            </figure>
+        </div>
     </section>
 
     <section id="results">
