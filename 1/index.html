@@ -47,7 +47,7 @@
                 <li>The function then returns the optimal shift that aligns the frames.</li>
                 <li>If an image was smaller than 128 pixels, the pyramid algorithm just ran the naive exhaustive search algorithm.</li>
             </ul>
-            This approach was okay, but for some images such as the "emir" image, it was still very misaligned. To improve this, I added added an automatic border croping step to remove any borders that affected alignment. Additionally, for the "emir" image, aligning to the blue channel did not work well, so I aligned to the green channel which worked better.
+            This approach was okay, but for some images such as the "emir" image, it was still very misaligned. To improve this, I added added an automatic border cropping step to remove any borders that affected alignment. Additionally, for the "emir" image, aligning to the blue channel did not work well, so I aligned to the green channel which worked better.
         </p>
         <h3>Comparison: "emir" Image Before and After Cropping</h3>
         <p>
