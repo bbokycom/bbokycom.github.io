@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../proj01/output"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "bbokycom.github.io"
+	}
+}

@@ -1,0 +1,2 @@
+two_for_loop_convolution time: 3.1995 seconds
+scipy.signal.convolve2d time: 0.6584 seconds

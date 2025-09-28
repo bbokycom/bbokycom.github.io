@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CS180/280A Project #2: Fun with Filters and Frequencies!</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .logo-bar {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            margin-bottom: 1.5em;
+        }
+        .logo-bar img {
+            height: 60px;
+        }
+        .section {
+            margin-bottom: 2.5em;
+        }
+        .subsection {
+            margin-bottom: 1.5em;
+        }
+        .deliverables-list, .scoring-list {
+            margin-left: 2em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-bar">
+            <div>
+                <h1>Programming Project #2 (proj2)</h1>
+                <h2>CS180: Intro to Computer Vision and Computational Photography</h2>
+                <h3>Fun with Filters and Frequencies!</h3>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section" id="part1">
+            <h2>Part 1: Filters and Edges</h2>
+
+            <div class="subsection" id="part1-1">
+                <h3>1.1 Convolutions from Scratch</h3>
+                <!-- Results, code, and discussion go here -->
+                In this project, I implemented the convolution operation from scratch using numpy operations, using both four nested loops and a more optimized approach with two loops. Below is the code for the two-loop implementation:
+                <pre>
+                def two_for_loop_convolution(image, kernel):
+                    img_height, img_width = image.shape
+                    kernel_height, kernel_width = kernel.shape
+                    pad_height = kernel_height // 2
+                    pad_width = kernel_width // 2
+                    padded_image = np.zeros((img_height + 2 * pad_height, img_width + 2 * pad_width), dtype=float)
+                    padded_image[pad_height:pad_height + img_height, pad_width:pad_width + img_width] = image
+                    convolved_image = np.zeros_like(image, dtype=float)
+                    for i in range(img_height):
+                        for j in range(img_width):
+                            region = padded_image[i:i + kernel_height, j:j + kernel_width]
+                            convolved_image[i, j] = np.sum(region * kernel)
+                    return convolved_image
+                </pre>
+                and here is the four-loop implementation:
+                <pre>
+                    def four_for_loop_convolution(image, kernel):
+                        img_height, img_width = image.shape
+                        kernel_height, kernel_width = kernel.shape
+                        pad_height = kernel_height // 2
+                        pad_width = kernel_width // 2
+                        padded_image = np.zeros((img_height + 2 * pad_height, img_width + 2 * pad_width), dtype=float)
+                        padded_image[pad_height:pad_height + img_height, pad_width:pad_width + img_width] = image
+                        convolved_image = np.zeros_like(image, dtype=float)
+                        for i in range(img_height):
+                            for j in range(img_width):
+                                for m in range(kernel_height):
+                                    for n in range(kernel_width):
+                                        convolved_image[i, j] += padded_image[i + m, j + n] * kernel[m, n]
+                        return convolved_image
+                </pre>
+                The runtime of the two-loop implementation is significantly faster than the four-loop version, as it reduces the number of explicit loops and leverages numpy's efficient array operations. It also handles edge cases by zero-padding the input image.
+                Using a selfie of myself as the input, and a 9x9 box filter as the kernel, here are the outputs of the two for loop implementation and the <code>scipy.signal.convolve2d</code> function:
+                <div style="display: flex; gap: 2em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_1/conv_4loop_box.png" alt="Convolution: Four-Loop Implementation (9x9 Box Filter)" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Four-Loop Convolution Output</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_1/conv_scipy_box.png" alt="Convolution: scipy.signal.convolve2d (9x9 Box Filter)" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>scipy.signal.convolve2d Output</figcaption>
+                    </figure>
+                </div>
+                They look the same, as expected. However, the timing is quite different. The two-loop 
+                implementation is significantly slower than the highly optimized <code>scipy.signal.convolve2d</code>.
+
+                <table style="margin-top:1em; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="border:1px solid #ccc; padding: 0.5em;">Method</th>
+                            <th style="border:1px solid #ccc; padding: 0.5em;">Runtime (seconds)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="border:1px solid #ccc; padding: 0.5em;">two_for_loop_convolution</td>
+                            <td style="border:1px solid #ccc; padding: 0.5em;">3.1995</td>
+                        </tr>
+                        <tr>
+                            <td style="border:1px solid #ccc; padding: 0.5em;">scipy.signal.convolve2d</td>
+                            <td style="border:1px solid #ccc; padding: 0.5em;">0.6584</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top:0.5em;">
+                    <strong>Conclusion:</strong> <code>scipy.signal.convolve2d</code> is about 5 times faster than the two-loop implementation.
+                </p>
+                Additionally, here are the results of convolving the same image with the difference operators Dx and Dy:
+                <div style="display: flex; gap: 2em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_1/conv_4loop_Dx.png" alt="Convolution: Four-Loop Implementation (Dx Operator)" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Four-Loop Convolution Output (Dx)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_1/conv_4loop_Dy.png" alt="Convolution: Four-Loop Implementation (Dy Operator)" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Four-Loop Convolution Output (Dy)</figcaption>
+                    </figure>
+                </div>
+                The Dx operator highlights vertical edges, while the Dy operator highlights horizontal edges, as expected.
+            </div>
+
+            <div class="subsection" id="part1-2">
+                <h3>1.2 Finite Difference Operator</h3>
+                <!-- Results, code, and discussion go here -->
+                 First, we take the partial derivatives of the cameraman image using the finite difference operators Dx and Dy implemented via convolution:
+                <div style="display: flex; gap: 2em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_2/cameraman_Ix.png" alt="Partial Derivative in X (Dx) of Cameraman" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Partial Derivative in X (Dx)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_2/cameraman_Iy.png" alt="Partial Derivative in Y (Dy) of Cameraman" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Partial Derivative in Y (Dy)</figcaption>
+                    </figure>
+                </div>
+                Now, we compute the gradient magnitude image by combining the partial derivatives using the formula:
+                <pre>
+                gradient_magnitude = np.sqrt(Dx**2 + Dy**2)
+                </pre>
+                The resulting gradient magnitude image is shown below:
+                <div style="display: flex; justify-content: center; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_2/cameraman_grad_mag.png" alt="Gradient Magnitude of Cameraman" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Gradient Magnitude Image</figcaption>
+                    </figure>
+                </div>
+                To create a binarized edge image, we apply a threshold to the gradient magnitude image. After experimenting with various thresholds and visually inspecting the results, I chose a threshold of 60 to be a good balance between capturing edges and minimizing noise. The results are shown here:
+                <div style="display: flex; justify-content: center; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_2/cameraman_edges.png" alt="Binarized Edge Image of Cameraman" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Binarized Edge Image (Threshold = 60)</figcaption>
+                    </figure>
+                </div>
+            </div>
+
+            <div class="subsection" id="part1-3">
+                <h3>1.3 Derivative of Gaussian (DoG) Filter</h3>
+                <!-- Results, code, and discussion go here -->
+                First, we construct the Gaussian. Below is the visualization of the 9x9 Gaussian filter:
+                <div style="display: flex; justify-content: center; gap: 1em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_3/G.png" alt="Gaussian Filter Visualization" style="width: 120px; height: 120px; border: 1px solid #ccc;">
+                        <figcaption>Gaussian Filter (G)</figcaption>
+                    </figure>
+                </div>
+                Next, we have the result of applying Gaussian smoothing, and the DoG filters to the cameraman image:
+                <div style="display: flex; justify-content: center; gap: 2em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_3/cameraman_blur.png" alt="Gaussian Blurred Cameraman" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>Gaussian Blurred Image</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_3/cameraman_blur_Ix.png" alt="DoGx (Gaussian Derivative in X) on Cameraman" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>DoGx Filtered Image</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_3/cameraman_blur_Iy.png" alt="DoGy (Gaussian Derivative in Y) on Cameraman" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>DoGy Filtered Image</figcaption>
+                    </figure>
+                </div>
+                <p>
+                    The gradient magnitude and binarized edge images using the DoG filters are shown above. Compared to the finite difference method, the DoG approach produces smoother edges and reduces noise, thanks to the initial Gaussian smoothing.
+                </p>
+                We can also compute the gradient magnitude from the DoG results, similar to the finite difference method:
+                <div style="display: flex; justify-content: center; gap: 2em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_3/cameraman_blur_grad_mag.png" alt="Gradient Magnitude from DoG" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>Gradient Magnitude (DoG)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_3/cameraman_blur_edges.png" alt="Binarized Edge Image from DoG" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>Binarized Edge Image (DoG, Threshold = 25)</figcaption>
+                    </figure>
+                </div>
+                Using a threshold of 25, we can obtain a clean edge map with much less noise than the finite difference method.<br>
+                <br>
+                We can also create a derivative of Gaussian filter to have one filter that does both. Here are the visualizations of the DoGx and DoGy filters:
+                <div style="display: flex; justify-content: center; gap: 1em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_3/DoGx.png" alt="Derivative of Gaussian in X (DoGx)" style="width: 120px; height: 120px; border: 1px solid #ccc;">
+                        <figcaption>Derivative of Gaussian in X (DoGx)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_3/DoGy.png" alt="Derivative of Gaussian in Y (DoGy)" style="width: 120px; height: 120px; border: 1px solid #ccc;">
+                        <figcaption>Derivative of Gaussian in Y (DoGy)</figcaption>
+                    </figure>
+                </div>
+                Using these DoG filters directly on the cameraman image yields the same results as the two-step process of Gaussian smoothing followed by finite differences, confirming the correctness of the implementation.
+                <div style="display: flex; justify-content: center; gap: 2em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part1_3/cameraman_DoGx.png" alt="DoGx (Derivative of Gaussian in X) on Cameraman" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>DoGx Output (Cameraman)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_3/cameraman_DoGy.png" alt="DoGy (Derivative of Gaussian in Y) on Cameraman" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>DoGy Output (Cameraman)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_3/cameraman_DoG_grad_mag.png" alt="Gradient Magnitude from DoG Filters" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>Gradient Magnitude (DoG)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part1_3/cameraman_DoG_edges.png" alt="Binarized Edge Image from DoG Filters" style="width: 250px; height: 250px; object-fit: contain; border: 1px solid #ccc;">
+                        <figcaption>Binarized Edge Image (DoG)</figcaption>
+                    </figure>
+                </div>
+            </div>
+        </section>
+        <section class="section" id="part2">
+            <h2>Part 2: Applications</h2>
+
+            <div class="subsection" id="part2-1">
+                <h3>2.1 Image "Sharpening"</h3>
+                <!-- Results, code, and discussion go here -->
+                 In this section, I implemented an unsharp mask filter to enhance image sharpness. This works by first blurring the original image using a Gaussian filter as a low-pass filter to remove high-frequency noise. This blurred image is then substracted from the original image to yield only the high-frequency components of the image. Finally, this high-frequency component is added back to the original image, which enhances the "sharpness" of the image by amplifying the edges and high-frequency details. 
+                 Here are the results of applying this to the Taj Mahal:
+                <div style="display: flex; justify-content: center; gap: 2em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_1/taj.jpg" alt="Original Taj Mahal" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Original Image</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_1/taj_blur.png" alt="Blurred Taj Mahal" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Blurred Image (Gaussian Blur)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_1/taj_sharp.png" alt="Sharpened Taj Mahal" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Sharpened Image (Unsharp Mask)</figcaption>
+                    </figure>
+                </div>
+                We can see that the sharpened image has more defined edges that stand out more compared to the original and blurred images. <br><br>
+                Below are the results of applying the same unsharp mask filter to another image of my choice, a cute dog!:
+                <div style="display: flex; justify-content: center; gap: 2em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_1/dog.jpg" alt="Original Dog" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Original Image (Dog)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_1/dog_blur.png" alt="Blurred Dog" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Blurred Image (Gaussian Blur)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_1/dog_sharp.png" alt="Sharpened Dog" style="max-width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Sharpened Image (Unsharp Mask)</figcaption>
+                    </figure>
+                </div>
+                I also tried the blur a sharp image first, and see if that makes a difference. Here are the results of that:
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2em; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_1/donkey.JPG" alt="Original Donkey" style="width: 1000px; max-width: 100%; border: 1px solid #ccc;">
+                        <figcaption>Original Image (Donkey)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_1/donkey_sharp.png" alt="Sharpened Donkey" style="width: 1000px; max-width: 100%; border: 1px solid #ccc;">
+                        <figcaption>Sharpened Image (Unsharp Mask)</figcaption>
+                    </figure>
+                </div>
+                They look very similar, but the resulting image is slightly different as it has been blurred, then sharpened, which may remove some high frequency noise before sharpening.
+            </div>
+
+            <div class="subsection" id="part2-2">
+                <h3>2.2 Hybrid Images</h3>
+                <ul>
+                    <li>Create three hybrid images (including Derek + Nutmeg and two of your own).</li>
+                    <li>For one hybrid, show the entire process: original and aligned images, Fourier transforms, filtered results, cutoff frequency choice, and final image.</li>
+                    <li>For the others, present the originals and the final hybrid.</li>
+                </ul>
+                <!-- Results, code, and discussion go here -->
+                 The first hybrid image I created is using the Derek + Nutmeg images provided. First, I aligned the two images by selecting corresponding points (the eyes of David and Nutmeg). I then high-pass filtered Nutmeg, and low-pass filtered Derek, combining them to create the hybrid image. I chose a cutoff frequency of 10 for the high-pass filter, and 15 for the low-pass, and that had a good visual result. Below are the original images and their aligned counterparts:
+                <div style="display: flex; flex-direction: row; gap: 2em; justify-content: center; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_2/1/DerekPicture.jpg" alt="Original Derek" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Original Derek</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/nutmeg.jpg" alt="Original Nutmeg" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Original Nutmeg</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/im1_aligned.png" alt="Aligned Derek" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Aligned Nutmeg</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/im2_aligned.png" alt="Aligned Nutmeg" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Aligned Derek</figcaption>
+                    </figure>
+                </div>
+                We can also show the FFT of the aligned images:
+                <div style="display: flex; flex-direction: row; gap: 2em; justify-content: center; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_2/1/im1_spectrum.png" alt="FFT Spectrum of Aligned Derek" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>FFT Spectrum (Derek, Aligned)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/im2_spectrum.png" alt="FFT Spectrum of Aligned Nutmeg" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>FFT Spectrum (Nutmeg, Aligned)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/im1_aligned_spectrum.png" alt="FFT Spectrum of Derek (Original)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>FFT Spectrum (Derek, Original)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/im2_aligned_spectrum.png" alt="FFT Spectrum of Nutmeg (Original)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>FFT Spectrum (Nutmeg, Original)</figcaption>
+                    </figure>
+                </div>
+                Next, we have the results of the filtering, and the final hybrid image:
+                <div style="display: flex; flex-direction: row; gap: 2em; justify-content: center; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_2/1/low_frequencies.png" alt="Low Frequencies (Derek)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Low Frequencies (Derek, cutoff=15)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/high_frequencies.png" alt="High Frequencies (Nutmeg)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>High Frequencies (Nutmeg, cutoff=10)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/hybrid_image_rgb.png" alt="Hybrid Image (Derek + Nutmeg)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Hybrid Image (Derek + Nutmeg)</figcaption>
+                    </figure>
+                </div>
+                From this, we can see that the hybrid image looks like Nutmeg when up close, and Derek when viewed from farther away. <br><br>
+                Here is also the FFT transforms of the filtered images and the hybrid:
+                <div style="display: flex; flex-direction: row; gap: 2em; justify-content: center; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_2/1/low_frequencies_spectrum.png" alt="FFT Spectrum of Low Frequencies (Derek)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>FFT Spectrum (Low Frequencies, Derek)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/high_frequencies_spectrum.png" alt="FFT Spectrum of High Frequencies (Nutmeg)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>FFT Spectrum (High Frequencies, Nutmeg)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/1/hybrid_spectrum.png" alt="FFT Spectrum of Hybrid Image" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>FFT Spectrum (Hybrid Image)</figcaption>
+                    </figure>
+                </div>
+                For my second hybrid image, I used an image of myself smiling and an image of myself frowning. Here are the inputs and hybrid:
+                <div style="display: flex; flex-direction: row; gap: 2em; justify-content: center; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_2/2/frown.jpg" alt="Original Frown" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Original (Frown)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/2/smile.jpg" alt="Original Smile" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Original (Smile)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/2/hybrid_image_rgb.png" alt="Hybrid Image (Smile + Frown)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Hybrid Image (Smile + Frown)</figcaption>
+                    </figure>
+                </div>
+                For my third image, I used a similar picture but of a meme smiling and frowning. Here are the inputs and hybrid:
+                <div style="display: flex; flex-direction: row; gap: 2em; justify-content: center; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_2/3/meme.jpg" alt="Original Meme" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Original (Meme)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_2/3/hybrid_image_rgb.png" alt="Hybrid Image (Meme Smile + Frown)" style="width: 250px; border: 1px solid #ccc;">
+                        <figcaption>Hybrid Image (Meme Smile + Frown)</figcaption>
+                    </figure>
+                </div>
+                I used a single .jpg file but aligned the two images within that single image using the alignment too. This results in a center frame that is aligned. Here is a close up of the aligned images:
+                <div style="display: flex; justify-content: center; gap: 1em; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_2/3/hybrid_image_rgb.png" alt="Aligned Meme Images" style="width: 500px; border: 1px solid #ccc;">
+                        <figcaption>Aligned Meme Images</figcaption>
+                    </figure>
+                </div>
+                This way of displaying it is interesting, as you can see the high and low frequencies on the right and left hand sides of the image respectively. 
+            </div>
+
+            <div class="subsection" id="part2-3-4">
+                <h3>2.3 + 2.4 Gaussian/Laplacian Stacks & Multiresolution Blending</h3>
+                <!-- Results, code, and discussion go here -->
+                 First, I implemented the Gaussian and Laplacian stack construction. I did this by repeatedly applying a Gaussian filter to the image, and iteratively applying that filter on the previous result to create a stack of increasingly blurred images. The Laplacian stack is then created by subtracting consecutive levels of the Gaussian stack, which captures the details lost between each level of blurring (with the last level being just the final image in the Gaussian stack). Below are the visualizations of the Gaussian stacks for the apple and orange images:
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 1em; margin-top: 1em;">
+                    <div style="display: flex; flex-direction: row; align-items: flex-start; gap: 1em; justify-content: center;">
+                        <div>
+                            <h4 style="text-align: center;">Apple Gaussian Stack</h4>
+                            <div style="display: flex; flex-direction: row; gap: 0.1em; justify-content:\ center;">
+                                <figure>
+                                    <img src="./part2_3/apple_gaussian/level_0.png" alt="Apple Gaussian Level 0" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 0</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/apple_gaussian/level_1.png" alt="Apple Gaussian Level 1" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 1</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/apple_gaussian/level_2.png" alt="Apple Gaussian Level 2" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 2</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/apple_gaussian/level_3.png" alt="Apple Gaussian Level 3" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 3</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/apple_gaussian/level_4.png" alt="Apple Gaussian Level 4" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 4</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/apple_gaussian/level_5.png" alt="Apple Gaussian Level 5" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 5</figcaption>
+                                </figure>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="text-align: center;">Orange Gaussian Stack</h4>
+                        <div style="display: flex; flex-direction: row; gap: 0.1em; justify-content: center;">
+                            <figure>
+                                <img src="./part2_3/orange_gaussian/level_0.png" alt="Orange Gaussian Level 0" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 0</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/orange_gaussian/level_1.png" alt="Orange Gaussian Level 1" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 1</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/orange_gaussian/level_2.png" alt="Orange Gaussian Level 2" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 2</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/orange_gaussian/level_3.png" alt="Orange Gaussian Level 3" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 3</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/orange_gaussian/level_4.png" alt="Orange Gaussian Level 4" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 4</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/orange_gaussian/level_5.png" alt="Orange Gaussian Level 5" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 5</figcaption>
+                            </figure>
+                        </div>
+                    </div>
+                </div>
+                Next, here are the visualizations of the Laplacian stacks for the apple and orange images:
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 1em; margin-top: 1em;">
+                    <div style="display: flex; flex-direction: row; align-items: flex-start; gap: 1em; justify-content: center;">
+                        <div>
+                            <h4 style="text-align: center;">Apple Laplacian Stack</h4>
+                            <div style="display: flex; flex-direction: row; gap: 0.1em; justify-content: center;">
+                                <figure>
+                                    <img src="./part2_3/laplacian_apple/laplacian_0.png" alt="Apple Laplacian Level 0" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 0</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/laplacian_apple/laplacian_1.png" alt="Apple Laplacian Level 1" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 1</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/laplacian_apple/laplacian_2.png" alt="Apple Laplacian Level 2" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 2</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/laplacian_apple/laplacian_3.png" alt="Apple Laplacian Level 3" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 3</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/laplacian_apple/laplacian_4.png" alt="Apple Laplacian Level 4" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 4</figcaption>
+                                </figure>
+                                <figure>
+                                    <img src="./part2_3/laplacian_apple/laplacian_5.png" alt="Apple Laplacian Level 5" style="width: 150px; border: 1px solid #ccc;">
+                                    <figcaption>Level 5</figcaption>
+                                </figure>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="text-align: center;">Orange Laplacian Stack</h4>
+                        <div style="display: flex; flex-direction: row; gap: 0.1em; justify-content: center;">
+                            <figure>
+                                <img src="./part2_3/laplacian_orange/laplacian_0.png" alt="Orange Laplacian Level 0" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 0</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/laplacian_orange/laplacian_1.png" alt="Orange Laplacian Level 1" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 1</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/laplacian_orange/laplacian_2.png" alt="Orange Laplacian Level 2" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 2</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/laplacian_orange/laplacian_3.png" alt="Orange Laplacian Level 3" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 3</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/laplacian_orange/laplacian_4.png" alt="Orange Laplacian Level 4" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 4</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="./part2_3/laplacian_orange/laplacian_5.png" alt="Orange Laplacian Level 5" style="width: 150px; border: 1px solid #ccc;">
+                                <figcaption>Level 5</figcaption>
+                            </figure>
+                        </div>
+                            </figure>
+                        </div>
+                    </div>
+                </div>
+                We can see that the images on the left contain the high-frequency details, while the right most images are the lower frequencies.
+                <br><br>
+                Next, I also created the visualization from Figure 3.42 (a) through (l):
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5em;">
+                    <div style="display: flex; flex-direction: row; gap: 0.5em;">
+                        <figure>
+                            <img src="./part2_3/blend_levels/a.png" alt="Figure 3.42 (a)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(a)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_3/blend_levels/b.png" alt="Figure 3.42 (b)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(b)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_3/blend_levels/c.png" alt="Figure 3.42 (c)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(c)</figcaption>
+                        </figure>
+                    </div>
+                    <div style="display: flex; flex-direction: row; gap: 0.5em;">
+                        <figure>
+                            <img src="./part2_3/blend_levels/d.png" alt="Figure 3.42 (d)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(d)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_3/blend_levels/e.png" alt="Figure 3.42 (e)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(e)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_3/blend_levels/f.png" alt="Figure 3.42 (f)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(f)</figcaption>
+                        </figure>
+                    </div>
+                    <div style="display: flex; flex-direction: row; gap: 0.5em;">
+                        <figure>
+                            <img src="./part2_3/blend_levels/g.png" alt="Figure 3.42 (g)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(g)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_3/blend_levels/h.png" alt="Figure 3.42 (h)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(h)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_3/blend_levels/i.png" alt="Figure 3.42 (i)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(i)</figcaption>
+                        </figure>
+                    </div>
+                    <div style="display: flex; flex-direction: row; gap: 0.5em;">
+                        <figure>
+                            <img src="./part2_3/blend_levels/j.png" alt="Figure 3.42 (j)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(j)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_3/blend_levels/k.png" alt="Figure 3.42 (k)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(k)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_3/blend_levels/l.png" alt="Figure 3.42 (l)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(l)</figcaption>
+                        </figure>
+                    </div>
+                </div>
+                In (l), we can see the final blended image, which looks very seamless and well blended. Here is a close-up of the blended image:
+                <div style="display: flex; justify-content: center; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_3/blended_oraple.png" alt="Final Blended Oraple Image" style="width: 600px; max-width: 100%; border: 1px solid #ccc;">
+                        <figcaption>Final Blended Image (Oraple)</figcaption>
+                    </figure>
+                </div>
+                For my first custom image, I decided to blend a picture of myself with a picture of myself, but positioned differently and with a mask such that one of my eyes is blended into my forehead. Here are the original images and the mask I used:
+                <div style="display: flex; flex-direction: row; gap: 2em; justify-content: center; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_3/custom_1/img2.png" alt="Custom Blend Image 1" style="width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Original Image 1</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_3/custom_1/img1.png" alt="Custom Blend Image 2" style="width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Original Image 2</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_3/custom_1/mask_1.png" alt="Custom Blend Mask" style="width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Blending Mask</figcaption>
+                    </figure>
+                </div>
+                As you can see, the mask is placed such that my eye is blended into my forehead. Here is the final result!:
+                <div style="display: flex; justify-content: center; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_3/custom_1/custom_blended.png" alt="Custom Blended Image Result" style="width: 600px; max-width: 100%; border: 1px solid #ccc;">
+                        <figcaption>Final Custom Blended Image</figcaption>
+                    </figure>
+                </div>
+
+                The second custom image I created was to make it as if my door had a big hole in it. Here are the original images and the mask I used:
+                <div style="display: flex; flex-direction: row; gap: 2em; justify-content: center; align-items: flex-start; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_3/custom_2/img3.png" alt="Custom Blend Image 3" style="width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Original Image 3</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_3/custom_2/img4.png" alt="Custom Blend Image 4" style="width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Original Image 4</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./part2_3/custom_2/mask2.png" alt="Custom Blend Mask 2" style="width: 300px; border: 1px solid #ccc;">
+                        <figcaption>Blending Mask 2</figcaption>
+                    </figure>
+                </div>
+                Here is the final result of the custom blend:
+                <div style="display: flex; justify-content: center; margin-top: 1em;">
+                    <figure>
+                        <img src="./part2_3/custom_2/custom_blended.png" alt="Custom Blended Image 2 Result" style="width: 600px; max-width: 100%; border: 1px solid #ccc;">
+                        <figcaption>Final Custom Blended Image 2</figcaption>
+                    </figure>
+                </div>
+                This was an interesting blend for me, so here is blend of the masked input images that were generated to create this final result:
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5em;">
+                    <div style="display: flex; flex-direction: row; gap: 0.5em;">
+                        <figure>
+                            <img src="./part2_4/blend_levels/a.png" alt="Figure 3.42 (a)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(a)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_4/blend_levels/b.png" alt="Figure 3.42 (b)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(b)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_4/blend_levels/c.png" alt="Figure 3.42 (c)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(c)</figcaption>
+                        </figure>
+                    </div>
+                    <div style="display: flex; flex-direction: row; gap: 0.5em;">
+                        <figure>
+                            <img src="./part2_4/blend_levels/d.png" alt="Figure 3.42 (d)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(d)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_4/blend_levels/e.png" alt="Figure 3.42 (e)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(e)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_4/blend_levels/f.png" alt="Figure 3.42 (f)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(f)</figcaption>
+                        </figure>
+                    </div>
+                    <div style="display: flex; flex-direction: row; gap: 0.5em;">
+                        <figure>
+                            <img src="./part2_4/blend_levels/g.png" alt="Figure 3.42 (g)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(g)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_4/blend_levels/h.png" alt="Figure 3.42 (h)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(h)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_4/blend_levels/i.png" alt="Figure 3.42 (i)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(i)</figcaption>
+                        </figure>
+                    </div>
+                    <div style="display: flex; flex-direction: row; gap: 0.5em;">
+                        <figure>
+                            <img src="./part2_4/blend_levels/j.png" alt="Figure 3.42 (j)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(j)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_4/blend_levels/k.png" alt="Figure 3.42 (k)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(k)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./part2_4/blend_levels/l.png" alt="Figure 3.42 (l)" style="width: 180px; border: 1px solid #ccc;">
+                            <figcaption>(l)</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
