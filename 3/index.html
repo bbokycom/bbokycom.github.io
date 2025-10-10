@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CS180/280A Project #3A: Image Warping and Mosaicing</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .logo-bar {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            margin-bottom: 1.5em;
+        }
+        .logo-bar img {
+            height: 60px;
+        }
+        .section {
+            margin-bottom: 2.5em;
+        }
+        .subsection {
+            margin-bottom: 1.5em;
+        }
+        .outline-list {
+            margin-left: 2em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-bar">
+            <div>
+                <h1>Programming Project #3 (proj3A)</h1>
+                <h2>CS180/280A: Intro to Computer Vision and Computational Photography</h2>
+                <h3>Image Warping and Mosaicing (first part of a larger project)</h3>
+            </div>
+        </div>
+    </header>
+    <main>
+        <section class="section">
+            <h2>A.1: Shoot the Pictures</h2>
+            To capture the projective transform images, I used my phone camera to take pictures of various scenes, fixing the vertical axis at the camera lens and rotating the camera through the scene. This ensured that the center of projection remained fixed through all the images. I also made sure to not rotate too much to ensure overlap between the images. Below are the sets of images I captured:
+            <div style="margin-bottom: 1.5em;">
+                <h3 style="margin-bottom: 0.5em;">Set 1</h3>
+                <div style="display: flex; gap: 1.5em; justify-content: flex-start; align-items: flex-end;">
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="mlk1.jpg" alt="MLK Set 1" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 1</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="mlk2.jpg" alt="MLK Set 2" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 2</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="mlk3.jpg" alt="MLK Set 3" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 3</figcaption>
+                    </figure>
+                </div>
+            </div>
+            <div style="margin-bottom: 1.5em;">
+                <h3 style="margin-bottom: 0.5em;">Set 2</h3>
+                <div style="display: flex; gap: 1.5em; justify-content: flex-start; align-items: flex-end;">
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="wheeler1.jpg" alt="Wheeler Set 1" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 1</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="wheeler2.jpg" alt="Wheeler Set 2" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 2</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="wheeler3.jpg" alt="Wheeler Set 3" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 3</figcaption>
+                    </figure>
+                </div>
+            </div>
+            <div style="margin-bottom: 1.5em;">
+                <h3 style="margin-bottom: 0.5em;">Set 3</h3>
+                <div style="display: flex; gap: 1.5em; justify-content: flex-start; align-items: flex-end;">
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="outside1.jpg" alt="Outside Set 1" style="max-width:320px; width:100%; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 1</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="outside2.jpg" alt="Outside Set 2" style="max-width:320px; width:100%; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 2</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="outside3.jpg" alt="Outside Set 3" style="max-width:320px; width:100%; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 3</figcaption>
+                    </figure>
+                </div>
+            </div>
+        </section>
+        <section class="section">
+            <h2>A.2: Recover Homographies</h2>
+            <div class="subsection" style="display: flex; gap: 2em; align-items: flex-start;">
+                <div style="flex:1;">
+                    <h3>First Set of Correspondence Points (Image 1) (dots in red)</h3>
+                    <img src="mlk_img1_with_correspondences_highres.png" alt="Correspondence points visualization (Image 1)" style="max-width:100%; height:auto; border:1px solid #ccc;">
+                </div>
+                <div style="flex:1;">
+                    <h3>First Set of Correspondence Points (Image 2) (dots in blue)</h3>
+                    <img src="mlk_img2_with_correspondences_highres.png" alt="Correspondence points visualization (Image 2)" style="max-width:100%; height:auto; border:1px solid #ccc;">
+                </div>
+            </div>
+            <p>These are the correspondences for the first set of images. These correspondences resulted in the following system of equations:</p>
+            <div class="subsection">
+                <h3>System of Equations Matrix <code>A</code></h3>
+                <pre style="font-size:0.95em; background:#f8f8f8; border:1px solid #ddd; padding:1em; overflow-x:auto;">
+[[ 1.30e+03  7.16e+02  1.00e+00  0.00e+00  0.00e+00  0.00e+00 -3.39e+05 -1.86e+05]
+ [ 0.00e+00  0.00e+00  0.00e+00  1.30e+03  7.16e+02  1.00e+00 -8.19e+05 -4.51e+05]
+ [ 1.30e+03  1.57e+03  1.00e+00  0.00e+00  0.00e+00  0.00e+00 -3.84e+05 -4.63e+05]
+ [ 0.00e+00  0.00e+00  0.00e+00  1.30e+03  1.57e+03  1.00e+00 -2.11e+06 -2.55e+06]
+ [ 2.37e+03  7.10e+02  1.00e+00  0.00e+00  0.00e+00  0.00e+00 -3.31e+06 -9.89e+05]
+ [ 0.00e+00  0.00e+00  0.00e+00  2.37e+03  7.10e+02  1.00e+00 -1.67e+06 -4.99e+05]
+ [ 2.33e+03  1.92e+03  1.00e+00  0.00e+00  0.00e+00  0.00e+00 -3.22e+06 -2.65e+06]
+ [ 0.00e+00  0.00e+00  0.00e+00  2.33e+03  1.92e+03  1.00e+00 -4.19e+06 -3.44e+06]]
+                </pre>
+            </div>
+            <div class="subsection">
+                <h3>System of Equations Vector <code>b</code></h3>
+                <pre style="font-size:0.95em; background:#f8f8f8; border:1px solid #ddd; padding:1em; overflow-x:auto;">
+[  260.45   630.48   295.28  1623.32  1394.21   703.32  1379.96  1795.91 ]
+                </pre>
+            </div>
+            We use these equations to solve for the homography matrix by using the equation <code>Ah = b</code>, where <code>h</code> is the vectorized form of the homography matrix. The resulting homography matrix is:
+            <div class="subsection">
+                <h3>Computed Homography Matrix</h3>
+                <pre style="font-size:0.95em; background:#f8f8f8; border:1px solid #ddd; padding:1em; overflow-x:auto;">
+[[ 2.26  0.07 -2576. ]
+ [ 0.42  1.87  -892. ]
+ [ 0.00  0.00     1. ]]
+                </pre>
+            </div>
+            This results in the warped image below:
+            <div class="subsection">
+                <h3>Warped Image (Bilinear Interpolation)</h3>
+                <img src="mlk_warped_img_bilinear.png" alt="Warped Image (Bilinear Interpolation)" style="max-width:100%; height:auto; border:1px solid #ccc;">
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>A.3: Warp the Images</h2>
+            <div class="subsection">
+                <h3>Nearest Neighbor vs. Bilinear Interpolation</h3>
+                <div style="display: flex; gap: 2em; flex-wrap: wrap;">
+                    <figure style="margin:0;">
+                        <img src="mlk_warped_img_nearest.png" alt="Warped image (Nearest Neighbor)" style="max-width:350px; width:100%; border:1px solid #ccc;">
+                        <figcaption style="text-align:center; margin-top:0.5em;">Nearest Neighbor Interpolation</figcaption>
+                    </figure>
+                    <figure style="margin:0;">
+                        <img src="mlk_warped_img_bilinear.png" alt="Warped image (Bilinear)" style="max-width:350px; width:100%; border:1px solid #ccc;">
+                        <figcaption style="text-align:center; margin-top:0.5em;">Bilinear Interpolation</figcaption>
+                    </figure>
+                </div>
+                <p style="margin-top:1em;">
+                    The left image uses nearest neighbor interpolation. The right image uses bilinear interpolation. Both results look quite similar. However, on some thin lines, the bilinear interpolation appears slightly smoother than the nearest neighbor result.
+                </p>
+            </div>
+            <h3>Rectification Examples</h3>
+            <div class="subsection" style="display: flex; gap: 2em; align-items: flex-start;">
+                <div style="flex:1; text-align:center;">
+                    <h4>Original (Unrectified) Image</h4>
+                    <img src="laufey1.jpg" alt="Laufey Unrectified" style="max-width:350px; width:100%; border:1px solid #ccc;">
+                </div>
+            </div>
+            <div class="subsection" style="display: flex; gap: 2em; align-items: flex-start;">
+                <div style="flex:1; text-align:center; margin-top:2em;">
+                    <h4>Rectified (Nearest Neighbor)</h4>
+                    <img src="laufey_nearest copy.png" alt="Laufey Rectified Nearest Neighbor" style="max-width:350px; width:100%; border:1px solid #ccc;">
+                </div>
+                <div style="flex:1; text-align:center; margin-top:2em;">
+                    <h4>Rectified (Bilinear)</h4>
+                    <img src="laufey_bilinear copy.png" alt="Laufey Rectified Bilinear" style="max-width:350px; width:100%; border:1px solid #ccc;">
+                </div>
+            </div>
+            <h3>Rectification Example: Pokémon Card</h3>
+            <div class="subsection" style="display: flex; gap: 2em; align-items: flex-start;">
+                <div style="flex:1; text-align:center;">
+                    <h4>Original (Unrectified) Image</h4>
+                    <img src="man1.jpg" alt="Pokémon Card Unrectified" style="max-width:350px; width:100%; border:1px solid #ccc;">
+                </div>
+            </div>
+            <div class="subsection" style="display: flex; gap: 2em; align-items: flex-start;">
+                <div style="flex:1; text-align:center; margin-top:2em;">
+                    <h4>Rectified (Nearest Neighbor)</h4>
+                    <img src="man_nearest.png" alt="Pokémon Card Rectified Nearest Neighbor" style="max-width:350px; width:100%; border:1px solid #ccc;">
+                </div>
+                <div style="flex:1; text-align:center; margin-top:2em;">
+                    <h4>Rectified (Bilinear)</h4>
+                    <img src="man_bilinear.png" alt="Pokémon Card Rectified Bilinear" style="max-width:350px; width:100%; border:1px solid #ccc;">
+                </div>
+            </div>
+            <p>
+                Again, the bilinear and nearest neighbor results look quite similar.
+            </p>
+
+        </section>
+
+        <section class="section">
+            <h2>A.4: Blend the Images into a Mosaic</h2>
+            <p style="margin-top:1em;">
+                To create the mosaics, I first determined a central reference image for each set (usually the middle image). I then computed the homographies from each image to this base image. Using these homographies, I warped every other image into the coordinate frame of the base image.
+            </p>
+            <p>
+                Then, using the warped correspondence points of each image and the base image correspondences, I calculated an average shift for each image that would align it with the base image. Using these shifts, and the bounding corners of all the warped images, I computed the overall bounding box for the mosaic. I created a blank canvas for the mosaic using those dimensions, and placed the base image in the appropriate location.
+            </p>
+            <p>
+                For every other image, I placed the warped image onto the mosaic canvas at the calculated shift position relative to the base image. To blend the images and reduce edge artifacts, I used <code>scipy.ndimage.distance_transform_edt</code> to compute a distance transform for each image mask, which gives the distance of each pixel to the nearest zero-valued pixel (i.e., the edge).
+            </p>
+            <p>
+                Using this as a weight map, I performed weighted averaging of overlapping pixels from different images. For example, if two images overlap at a pixel, I add the pixel values of each image weighted by their distance transform value, and divide by the sum of the weights to get a blended pixel value. This helps make the mosaics look much better by smoothing out transitions between images.
+            </p>
+            <div class="subsection">
+                <h3>Set 1 Source Images</h3>
+                <div style="display: flex; gap: 1.5em; justify-content: flex-start; align-items: flex-end;">
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="mlk1.jpg" alt="MLK Set 1" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 1</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="mlk2.jpg" alt="MLK Set 2" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 2</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="mlk3.jpg" alt="MLK Set 3" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 3</figcaption>
+                    </figure>
+                </div>
+            </div>
+            <div class="subsection" style="margin-top: 1.5em;">
+                <h3>Mosaic Result</h3>
+                <img src="mlk_mosaic.png" alt="Mosaic Result" style="max-width:100%; height:auto; border:1px solid #ccc;">
+            </div>
+            <div class="subsection">
+                <h3>Set 2 Source Images</h3>
+                <div style="display: flex; gap: 1.5em; justify-content: flex-start; align-items: flex-end;">
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="wheeler1.jpg" alt="Wheeler Set 1" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 1</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="wheeler2.jpg" alt="Wheeler Set 2" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 2</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="wheeler3.jpg" alt="Wheeler Set 3" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 3</figcaption>
+                    </figure>
+                </div>
+            </div>
+            <div class="subsection" style="margin-top: 1.5em;">
+                <h3>Mosaic Result</h3>
+                <img src="wheeler_mosaic.png" alt="Wheeler Mosaic Result" style="max-width:100%; height:auto; border:1px solid #ccc;">
+            </div>
+            <div class="subsection">
+                <h3>Set 3 Source Images</h3>
+                <div style="display: flex; gap: 1.5em; justify-content: flex-start; align-items: flex-end;">
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="outside1.jpg" alt="Outside Set 1" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 1</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="outside2.jpg" alt="Outside Set 2" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 2</figcaption>
+                    </figure>
+                    <figure style="margin:0; flex:1; text-align:center;">
+                        <img src="outside3.jpg" alt="Outside Set 3" style="width:100%; max-width:320px; height:auto; border:1.5px solid #888; box-shadow:0 2px 8px #0001;">
+                        <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Image 3</figcaption>
+                    </figure>
+                </div>
+            </div>
+            <div class="subsection" style="margin-top: 1.5em;">
+                <h3>Mosaic Result</h3>
+                <img src="outside_mosaic.png" alt="Outside Mosaic Result" style="max-width:100%; height:auto; border:1px solid #ccc; transform: rotate(90deg);">
+            </div>
+        </section>
+        <section class="section">
+            <h2>Deliverables</h2>
+            <ul>
+                <li>Code and project webpage.</li>
+                <li>All required images, visualizations, and explanations as specified above.</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
