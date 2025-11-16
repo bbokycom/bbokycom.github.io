@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CS180/280A Project #3A: Image Warping and Mosaicing</title>
+    <title>CS180/280A Project #4: Neural Radiance Field!</title>
     <link rel="stylesheet" href="../style.css">
     <style>
         .logo-bar {
@@ -276,37 +276,37 @@
         <h3>Camera Circling</h3>
         <div style="text-align:center; margin-bottom:2em;">
             <video controls style="width:100%; max-width:600px; height:auto;">
-                <source src="./p2/cup_intermediate/cup_video.mp4" type="video/mp4">
+                <source src="./p2/cup_video.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Camera Circling Novel Views (Cup)</figcaption>
         </div>
         <h3>Changes Made</h3>
-        To fit the cup dataset, I decreased the dimensionality of the positional encoding, as I noticed that the original high frequency could have caused overfitting. Besides that, I kept most of the hyperparameters the same as the Lego dataset, including the learning rate and model architecture.
+        To fit the cup dataset, I decreased the dimensionality of the positional encoding, as I noticed that the original high frequency could have caused overfitting. Besides that, I kept most of the hyperparameters the same as the Lego dataset, including the learning rate and model architecture. I also had to adjust the near and far bounds for sampling points along the ray to better suit the scale of the cup scene. I changed it from (2.0, 6.0) to (0.02, 0.7) to ensure that the sampled points covered the cup adequately.
         <h3>Training Loss Plot</h3>
         <div style="text-align:center; margin-bottom:2em;">
             <figure style="display:inline-block; margin:0;">
-                <img src="./p2/cup_intermediate/training_loss.png" alt="Training Loss Plot (Cup)" style="width:100%; max-width:500px; height:auto;">
+                <img src="./p2/cup_intermediate/2500_loss.png" alt="Training Loss Plot (Cup)" style="width:100%; max-width:500px; height:auto;">
                 <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Training Loss Plot (Cup)</figcaption>
             </figure>
         </div>
         <h3>Intermediate Renders</h3>
         <div style="display: flex; gap: 2em; justify-content: flex-start; align-items: flex-end; margin-bottom:2em;">
             <figure style="margin:0; flex:1; text-align:center;">
-                <img src="./p2/cup_intermediate/intermediate_0100.png" alt="Cup Epoch 100" style="width:100%; max-width:220px; height:auto; box-shadow:0 2px 8px #0001;">
+                <img src="./p2/cup_intermediate/100.png" alt="Cup Epoch 100" style="width:100%; max-width:220px; height:auto; box-shadow:0 2px 8px #0001;">
                 <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Epoch 100</figcaption>
             </figure>
             <figure style="margin:0; flex:1; text-align:center;">
-                <img src="./p2/cup_intermediate/intermediate_0500.png" alt="Cup Epoch 500" style="width:100%; max-width:220px; height:auto; box-shadow:0 2px 8px #0001;">
+                <img src="./p2/cup_intermediate/500.png" alt="Cup Epoch 500" style="width:100%; max-width:220px; height:auto; box-shadow:0 2px 8px #0001;">
                 <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Epoch 500</figcaption>
             </figure>
             <figure style="margin:0; flex:1; text-align:center;">
-                <img src="./p2/cup_intermediate/intermediate_1000.png" alt="Cup Epoch 1000" style="width:100%; max-width:220px; height:auto; box-shadow:0 2px 8px #0001;">
+                <img src="./p2/cup_intermediate/1000.png" alt="Cup Epoch 1000" style="width:100%; max-width:220px; height:auto; box-shadow:0 2px 8px #0001;">
                 <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Epoch 1000</figcaption>
             </figure>
             <figure style="margin:0; flex:1; text-align:center;">
-                <img src="./p2/cup_intermediate/intermediate_1800.png" alt="Cup Epoch 1800" style="width:100%; max-width:220px; height:auto; box-shadow:0 2px 8px #0001;">
-                <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Epoch 1800</figcaption>
+                <img src="./p2/cup_intermediate/2500.png" alt="Cup Epoch 2500" style="width:100%; max-width:220px; height:auto; box-shadow:0 2px 8px #0001;">
+                <figcaption style="margin-top:0.5em; font-size:1em; color:#444;">Epoch 2500</figcaption>
             </figure>
         </div>
     </main>
