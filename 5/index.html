@@ -719,6 +719,7 @@
         </div>
     </div>
     <h3>Training the UNet</h3>
+    Implementing the UNet was relatively straightforward. I first filled out all the blocks (Conv, DownConv, UpConv, etc.) and then assembled them into the full UNet architecture, which included downsampling and upsampling paths, with skip connections between them. The training loss curve is shown below:
     <div class="image-row" style="justify-content: center;">
         <div class="image-block" style="flex: 1 1 100%;">
             <img src="./B1/loss.png" style="width: 100%; max-width: 1000px; height: auto;">
