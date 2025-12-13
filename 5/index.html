@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
   <meta charset="UTF-8">
   <title>CS180 Project 5 – Diffusion Models</title>
   <link rel="stylesheet" href="../style.css">
@@ -58,7 +59,7 @@
 
 <hr>
 
-<h2>Part A: The Power of Diffusion Models</h2>
+<h1>Part A: The Power of Diffusion Models</h1>
 <section class="section">
   <h2>Part 0: Setup</h2>
   <p>
@@ -91,6 +92,7 @@
             <li><em>"a panoramic view of the grand canyon filled with candy"</em></li>
             <li><em>"a macro close up shot of a jumping spider"</em></li>
         </ul>
+        Additionally, I set a random seed for reproducibility at 100.
     </p>
     <div class="image-row">
         <div class="image-block">
@@ -125,6 +127,9 @@
 
 <section class="section">
   <h2>1.1 Forward Diffusion</h2>
+  <p>To implement forward diffusion, I had to code out the following equation: 
+    \(x_t = \sqrt{\bar{\alpha_t}} x_0 + \sqrt{1 - \bar{\alpha_t}} \epsilon\). To this end, I first got the \(\bar{\alpha_t}\) value from the <code>alphas_cumprod</code> array, which I then used to compute \(\bar{x_t}\) according to the equation above, also using a randomly sampled noise \(\epsilon\). The resulting noisy images for different time steps are shown below.
+</p>
 <div class="image-row" style="gap: 20px;">
     <div class="image-block" style="flex: 1;">
         <img src="./A1/campanile.png" style="width: 100%; max-width: none; height: auto;">
@@ -147,6 +152,7 @@
 
 <section class="section">
   <h2>1.2 Classical Denoising</h2>
+  <p>To implement classical denoising, I simply used <code>torchvision.transforms.functional.gaussian_blur</code>. The results are shown below.</p>
 <div class="image-row" style="gap: 20px;">
     <div class="image-block" style="flex: 1;">
         <img src="./A1/campanile_noise_250.png" style="width: 100%; max-width: none; height: auto;">
@@ -180,6 +186,7 @@
 
 <section class="section">
   <h2>1.3 One-Step Denoising</h2>
+  To implement one-step denoising, I essentially do the inverse of the forward diffusion process. Given a noisy image, I use the pretrained diffusion model to predict the noise, and then use that to estimate the clean image. 
 <div class="image-row" style="gap: 20px;">
     <div class="image-block" style="flex: 1;">
         <img src="./A1/campanile_noise_250.png" style="width: 100%; max-width: none; height: auto;">
@@ -212,7 +219,10 @@
 </section>
 
 <section class="section">
-  <h2>1.4 Iterative Denoising</h2>
+    <h2>1.4 Iterative Denoising</h2>
+    <p>
+        To implement iterative denoising, I divided the timesteps into intervals of 30, rather than performing the entire denoising in a single step. In the loop, I step from the starting timestep index down to the end, updating the image at each interval. At each step, I apply the denoising process similar to the one-step method, but iteratively for each time range, and save the predicted image at each stage.
+    </p>
 <div class="image-row" style="gap: 20px;">
     <div class="image-block" style="flex: 1;">
         <img src="./A1/campanile_iterative_0.png" style="width: 100%; max-width: none; height: auto;">
@@ -283,6 +293,7 @@
 
 <section class="section">
   <h2>1.6 Classifier-Free Guidance</h2>
+  <p>To implement the classifier-free guidance, we essentially use the code from the previous section, but modify the noise estimation. We generate both a noise estimate with and without conditioning, then combine them to guide the sampling process more effectively. We combine them using the equation \(\epsilon = \epsilon_u + \gamma (\epsilon_c - \epsilon_u)\). This results in the following images, which look much better!</p>
 <div class="image-row" style="gap: 20px;">
     <div class="image-block" style="flex: 1;">
         <img src="./A16/cond_sample_1.png" style="width: 100%; max-width: none; height: auto;">
@@ -309,6 +320,9 @@
 
 <section class="section">
     <h2>1.7 Image-to-image Translation</h2>
+    <p>
+        For image-to-image translation, we begin the denoising process from an intermediate timestep by providing a partially noised image, rather than starting from pure noise. The diffusion model then denoises this input, effectively translating it into a new image. Notably, the later the starting timestep (i.e., the less noise added), the more the output resembles the original image, since less transformation occurs during denoising.
+    </p>
     <div class="image-row" style="gap: 20px;">
         <div class="image-block" style="flex: 1;">
             <img src="./A17/campanile1.png" style="width: 100%; max-width: none; height: auto;">
@@ -404,6 +418,7 @@
 </section>
 <section class="section">
   <h2>1.7.1 Editing Hand-Drawn and Web Images</h2>
+    <p>Here, we do the same image-to-image translation process as before, starting the denoising from various intermediate timesteps to observe how the output changes with different levels of initial noise.</p>
     <div class="image-row" style="gap: 20px;">
         <div class="image-block" style="flex: 1;">
             <img src="./handdrawn/cat1.png" style="width: 100%; max-width: none; height: auto;">
@@ -497,6 +512,7 @@
 </section>
 <section class="section">
     <h2>1.7.2 Inpainting</h2>
+    <p>To facilitate inpainting, we simply change the equation for the denoising process. When the mask is zero, we keep the original pixel value, and otherwise, we apply the denoising step as usual. This leads to the dark regions of the mask being preserved while the white regions are filled in with new content generated by the model.</p>
     <div class="image-row" style="gap: 20px;">
         <div class="image-block" style="flex: 1;">
             <img src="./inpainting/campanile_orig.png" style="width: 100%; max-width: none; height: auto;">
@@ -512,7 +528,7 @@
         </div>
         <div class="image-block" style="flex: 1;">
             <img src="./inpainting/campanile_infill.png" style="width: 100%; max-width: none; height: auto;">
-            <div class="caption">campanile inpainted</div>
+            <div class="caption">campanile inpainted<br>(wizard hat???)</div>
         </div>
     </div>
     <div class="image-row" style="gap: 20px; margin-top: 10px;">
@@ -530,7 +546,7 @@
         </div>
         <div class="image-block" style="flex: 1;">
             <img src="./inpainting/dog_infill.png" style="width: 100%; max-width: none; height: auto;">
-            <div class="caption">dog inpainted</div>
+            <div class="caption">dog inpainted<br>(no more ball :()</div>
         </div>
     </div>
     <div class="image-row" style="gap: 20px; margin-top: 10px;">
@@ -554,6 +570,13 @@
 </section>
 <section class="section">
     <h2>1.7.3 Text-Conditioned Image-to-Image Translations</h2>
+    <p>To implement text-conditioned Image-to-Image translations, we simply change the conditioned prompt embeddings from simply "a high quality photo" (corresponding to the natural image manifold) to whatever prompt we desire.</p>
+    The prompts used for each image are as follows:
+    <ul>
+        <li>Amalfi: "a photo of the amalfi cost"</li>
+        <li>Chef: "'a realistic iphone photo of a chef flipping a burger'"</li>
+        <li>Sunset: "a photo of a sunset"</li>
+    </ul>
     <div class="image-row" style="gap: 20px;">
         <div class="image-block" style="flex: 1;">
             <img src="./translation/amalfi1.png" style="width: 100%; max-width: none; height: auto;">
@@ -647,6 +670,7 @@
 </section>
 <section class="section">
     <h2>1.8 Visual Anagrams</h2>
+    <p>To implement these visual anagrams, I modified the usual iterative denoising process to enforce two textual constraints simultaneously. First, I run the image through the UNet using the first prompt embedding, applying classifier-free guidance with an unconditional noise estimate. Then, I flip the image, and run it through the UNet again using the second prompt embedding, then I average the results to create a single image that satisfies both prompts.</p>
     <div class="image-row" style="gap: 20px;">
         <div class="image-block" style="flex: 1;">
             <img src="./anagrams/snowy_village.png" style="width: 100%; max-width: none; height: auto;">
@@ -671,6 +695,7 @@
 
 <section class="section">
     <h2>1.9 Hybrid Images</h2>
+    <p>To generate hybrid images, I combined low frequency information from one prompt with high frequency information from the other. To do this, I run a given image through the UNet twice, once conditioned on the first prompt and again conditioned on the second prompt. Then, I applied a Gaussian blur to extract the low frequency components from the first prompt's noise. For the second prompt's noise, I subtracted the Gaussian blur of itself from itself to get the high frequency components. Adding these together produces the final hybrid image.</p>
     <div class="image-row" style="gap: 20px;">
         <div class="image-block" style="flex: 1;">
             <img src="./anagrams/bee_sunset.png" style="width: 100%; max-width: none; height: auto;">
@@ -682,6 +707,159 @@
         </div>
     </div>
 </section>
+
+<h1>Part B: Flow Matching from Scratch!</h1>
+<section class="section">
+    <h2>Part 1: Training a Single-Step Denoising UNet</h2>
+    <h3>Visualization of the Noising Process</h3>
+    <div class="image-row" style="justify-content: center;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B1/noise_levels.png" style="width: 100%; max-width: 1000px; height: auto;">
+            <div class="caption">Visualization of noise levels during the noising process</div>
+        </div>
+    </div>
+    <h3>Training the UNet</h3>
+    <div class="image-row" style="justify-content: center;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B1/loss.png" style="width: 100%; max-width: 1000px; height: auto;">
+            <div class="caption">Training loss curve for the single-step denoising UNet</div>
+        </div>
+    </div>
+    <h3>Sample results within distribution</h3>
+    Here are some sample results with noise level 0.5 after epochs 1 and 5. It is clear that after epoch 1, there is some imprint of the original image, but after epoch 5, the denoised image is very similar to the original.
+    <div class="image-row" style="justify-content: stretch;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B1/epoch1.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Epoch 1 (noise level 0.5)</div>
+        </div>
+    </div>
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B1/epoch5.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Epoch 5 (noise level 0.5)</div>
+        </div>
+    </div>
+    <h3>Sample results out of distribution</h3>
+    Here are some sample results out of distribution. It is clear that while it still is effective at some noise levels, once the noise level gets too high, the denoised images become noticeably worse. In the following visual, original images are on the left, the noisy images are in the middle, and the denoised images are on the right.
+    <div class="image-row" style="justify-content: stretch;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B1/ood.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Out-of-distribution: Visualization of noise levels (top to bottom: 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0)</div>
+        </div>
+    </div>
+    <h3>Denoising Pure Noise</h3>
+    We use the UNet to denoise pure, random Gaussian noise. Here is the training loss curve for this process. It is noticeable that the loss is higher than the loss curve from training the UNet on images from the dataset, which is expected since denoising pure noise is a more difficult task.
+    <div class="image-row" style="justify-content: center;"></div>
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B1/noise_loss.png" style="width: 100%; max-width: 1000px; height: auto;">
+            <div class="caption">Training loss curve for denoising pure noise</div>
+        </div>
+    </div>
+    Here are the results of denoising pure noise at different epochs.
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B1/purenoise1.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Denoising pure noise – Epoch 1</div>
+        </div>
+    </div>
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B1/purenoise5.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Denoising pure noise – Epoch 5</div>
+        </div>
+    </div>
+    For epoch 1, the model maps it to some vague noise pattern, and on epoch 5, the model generates the same roughly "8"-shaped pattern each time. This could be because the model has collapsed to predicting the mean of the MNIST distribution, which would minimize the MSE loss without conditioning.
+</section>
+
+<section class="section">
+    <h2>Part 2: Training a Flow Matching Model</h2>
+
+    <h3>Part 2.1: Adding Time Conditioning to the UNet</h3>
+    To add time conditioning to the UNet, I added two new <code>FCBlocks</code> (fully-connected blocks), which consist of a linear layer, a GELU activation, and another linear layer. These blocks take in the time <code>t</code> and are injected into the UNet during the upsampling stage. 
+    <h3>Part 2.2: Training the UNet</h3>
+    The training plot for the time-conditioned UNet is shown below.
+    <div class="image-row" style="justify-content: center;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/time_loss.png" style="width: 100%; max-width: 1000px; height: auto;">
+            <div class="caption">Training loss curve for the time-conditioned UNet</div>
+        </div>
+    </div>
+    <h3>Part 2.3: Sampling from the UNet</h3>
+    Again, we pass in noise to the model and sample from it after epochs 1, 5, and 10.
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/time_epoch1.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 1</div>
+        </div>
+    </div>
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/time_epoch5.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 5</div>
+        </div>
+    </div>
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/time_epoch10.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 10</div>
+        </div>
+    </div>
+    The results are pretty bad, but there is some structure emerging by epoch 10.
+    <h3>Part 2.4: Adding Class-Conditioning to UNet</h3>
+    Similar to the time conditioning, I added another two <code>FCBlocks</code> that take in the one-hot encoded class labels and inject them along with the time conditioning during the upsampling stage.
+    <h3>Part 2.5: Training the UNet (Class-Conditioned)</h3>
+    <div class="image-row" style="justify-content: center;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/class_loss.png" style="width: 100%; max-width: 1000px; height: auto;">
+            <div class="caption">Training loss curve for the class-conditioned UNet</div>
+        </div>
+    </div>
+    <h3>Part 2.6: Sampling from the UNet (Class-Conditioned)</h3>
+    Finally, we sample from the class-conditioned UNet after epochs 1, 5, and 10.
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/class_epoch1.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 1</div>
+        </div>
+    </div>
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/class_epoch5.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 5</div>
+        </div>
+    </div>
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/class_epoch10.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 10</div>
+        </div>
+    </div>
+    It is evident that by the 10th epoch, the model is generating very convincing MNIST digits that correspond to the class labels! Yay!
+    <h3>Getting rid of that pesky learning rate scheduler</h3>
+    To remove the learning rate scheduler, I simply removed the scheduler and decreased the starting learning rate to 5e-3. This seemed to work well enough without any major issues.
+    <h3>Sampling from the UNet (No Scheduler)</h3>
+    Here are the sampling results after epochs 1, 5, and 10 with no learning rate scheduler:
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/no_sched_epoch1.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 1 (no scheduler)</div>
+        </div>
+    </div>
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/no_sched_epoch5.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 5 (no scheduler)</div>
+        </div>
+    </div>
+    <div class="image-row" style="justify-content: stretch; margin-top: 10px;">
+        <div class="image-block" style="flex: 1 1 100%;">
+            <img src="./B2/no_sched_epoch10.png" style="width: 100%; max-width: none; height: auto;">
+            <div class="caption">Sampling result – Epoch 10 (no scheduler)</div>
+        </div>
+    </div>
+</section>
+
+<div style="height: 2000px;"></div>
 
 </body>
 </html>
